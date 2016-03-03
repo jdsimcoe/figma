@@ -1,12 +1,21 @@
-var electron = require('electron');
-var Menu = electron.Menu;
-var shell = electron.shell;
+import {Menu, shell, clipboard} from 'electron';
 
-module.exports = function (mainWindow, nativefierVersion, onQuit) {
-    if (Menu.getApplicationMenu())
+/**
+ * @param nativefierVersion
+ * @param appQuit
+ * @param zoomIn
+ * @param zoomOut
+ * @param goBack
+ * @param goForward
+ * @param getCurrentUrl
+ * @param clearAppData
+ */
+function createMenu({nativefierVersion, appQuit, zoomIn, zoomOut, goBack, goForward, getCurrentUrl, clearAppData}) {
+    if (Menu.getApplicationMenu()) {
         return;
+    }
 
-    var template = [
+    const template = [
         {
             label: 'Edit',
             submenu: [
@@ -34,6 +43,14 @@ module.exports = function (mainWindow, nativefierVersion, onQuit) {
                     role: 'copy'
                 },
                 {
+                    label: 'Copy Current URL',
+                    accelerator: 'CmdOrCtrl+C',
+                    click: () => {
+                        const currentURL = getCurrentUrl();
+                        clipboard.writeText(currentURL);
+                    }
+                },
+                {
                     label: 'Paste',
                     accelerator: 'CmdOrCtrl+V',
                     role: 'paste'
@@ -43,60 +60,95 @@ module.exports = function (mainWindow, nativefierVersion, onQuit) {
                     accelerator: 'CmdOrCtrl+A',
                     role: 'selectall'
                 },
+                {
+                    label: 'Clear App Data',
+                    click: () => {
+                        clearAppData();
+                    }
+                }
             ]
         },
         {
             label: 'View',
             submenu: [
                 {
+                    label: 'Back',
+                    accelerator: 'CmdOrCtrl+[',
+                    click: () => {
+                        goBack();
+                    }
+                },
+                {
+                    label: 'Forward',
+                    accelerator: 'CmdOrCtrl+]',
+                    click: () => {
+                        goForward();
+                    }
+                },
+                {
                     label: 'Reload',
                     accelerator: 'CmdOrCtrl+R',
-                    click: function(item, focusedWindow) {
-                        if (focusedWindow)
+                    click: (item, focusedWindow) => {
+                        if (focusedWindow) {
                             focusedWindow.reload();
+                        }
                     }
+                },
+                {
+                    type: 'separator'
                 },
                 {
                     label: 'Toggle Full Screen',
-                    accelerator: (function() {
-                        if (process.platform == 'darwin')
+                    accelerator: (() => {
+                        if (process.platform === 'darwin') {
                             return 'Ctrl+Command+F';
-                        else
-                            return 'F11';
-                    })(),
-                    click: function(item, focusedWindow) {
-                        if (focusedWindow)
-                            focusedWindow.setFullScreen(!focusedWindow.isFullScreen());
-                    }
-                },
-                {
-                    label: 'Toggle Window Developer Tools',
-                    accelerator: (function() {
-                        if (process.platform == 'darwin')
-                            return 'Alt+Command+I';
-                        else
-                            return 'Ctrl+Shift+I';
-                    })(),
-                    click: function(item, focusedWindow) {
-                        if (focusedWindow)
-                            focusedWindow.toggleDevTools();
-                    }
-                },
-                {
-                    label: 'Toggle Web Developer Tools',
-                    accelerator: (function() {
-                        if (process.platform == 'darwin')
-                            return 'Alt+Command+J';
-                        else
-                            return 'Ctrl+Shift+J';
-                    })(),
-                    click: function(item, focusedWindow) {
-                        if (focusedWindow) {
-                            mainWindow.webContents.send('toggle-dev-tools', true);
                         }
-
+                        return 'F11';
+                    })(),
+                    click: (item, focusedWindow) => {
+                        if (focusedWindow) {
+                            focusedWindow.setFullScreen(!focusedWindow.isFullScreen());
+                        }
                     }
                 },
+                {
+                    label: 'Zoom In',
+                    accelerator: (() => {
+                        if (process.platform === 'darwin') {
+                            return 'Command+=';
+                        }
+                        return 'Ctrl+=';
+                    })(),
+                    click: () => {
+                        zoomIn();
+                    }
+                },
+                {
+                    label: 'Zoom Out',
+                    accelerator: (() => {
+                        if (process.platform === 'darwin') {
+                            return 'Command+-';
+                        }
+                        return 'Ctrl+-';
+                    })(),
+                    click: () => {
+                        zoomOut();
+                    }
+                },
+                {
+                    label: 'Toggle Developer Tools',
+                    accelerator: (() => {
+                        if (process.platform === 'darwin') {
+                            return 'Alt+Command+I';
+                        }
+                        return 'Ctrl+Shift+I';
+                    })(),
+                    click: (item, focusedWindow) => {
+                        if (focusedWindow) {
+                            focusedWindow.toggleDevTools();
+                        }
+                    }
+                }
             ]
         },
         {
@@ -112,7 +164,7 @@ module.exports = function (mainWindow, nativefierVersion, onQuit) {
                     label: 'Close',
                     accelerator: 'CmdOrCtrl+W',
                     role: 'close'
-                },
+                }
             ]
         },
         {
@@ -121,17 +173,21 @@ module.exports = function (mainWindow, nativefierVersion, onQuit) {
             submenu: [
                 {
                     label: `Built with Nativefier v${nativefierVersion}`,
-                    click: function() { shell.openExternal('https://github.com/jiahaog/nativefier') }
+                    click: () => {
+                        shell.openExternal('https://github.com/jiahaog/nativefier');
+                    }
                 },
                 {
                     label: 'Report an Issue',
-                    click: function() { shell.openExternal('https://github.com/jiahaog/nativefier/issues') }
+                    click: () => {
+                        shell.openExternal('https://github.com/jiahaog/nativefier/issues');
+                    }
                 }
             ]
         }
     ];
 
-    if (process.platform == 'darwin') {
+    if (process.platform === 'darwin') {
         template.unshift({
             label: 'Electron',
             submenu: [
@@ -163,8 +219,10 @@ module.exports = function (mainWindow, nativefierVersion, onQuit) {
                 {
                     label: 'Quit',
                     accelerator: 'Command+Q',
-                    click: function() { onQuit(); }
-                },
+                    click: () => {
+                        appQuit();
+                    }
+                }
             ]
         });
         template[3].submenu.push(
@@ -178,6 +236,8 @@ module.exports = function (mainWindow, nativefierVersion, onQuit) {
         );
     }
 
-    var menu = Menu.buildFromTemplate(template);
+    const menu = Menu.buildFromTemplate(template);
     Menu.setApplicationMenu(menu);
-};
+}
+
+export default createMenu;

@@ -3900,32 +3900,7 @@
 	var BrowserWindow = _electron2.default.BrowserWindow;
 
 	function initContextMenu(mainWindow) {
-	    ipcMain.on('contextMenuOpened', function (event, targetHref) {
-	        var contextMenuTemplate = [{
-	            label: 'Open in default browser',
-	            click: function click() {
-	                if (targetHref) {
-	                    shell.openExternal(targetHref);
-	                    return;
-	                }
-	            }
-	        }, {
-	            label: 'Open in new window',
-	            click: function click() {
-	                if (targetHref) {
-	                    new BrowserWindow().loadURL(targetHref);
-	                    return;
-	                }
 
-	                mainWindow.useDefaultWindowBehaviour = true;
-	                mainWindow.webContents.send('contextMenuClosed');
-	            }
-	        }];
-
-	        var contextMenu = Menu.buildFromTemplate(contextMenuTemplate);
-	        contextMenu.popup(mainWindow);
-	        mainWindow.contextMenuOpen = true;
-	    });
 	}
 
 	exports.default = initContextMenu;
